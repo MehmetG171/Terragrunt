@@ -42,21 +42,21 @@ Terragrunt relies on a configuration file called `terragrunt.hcl`. This file is 
 
 ### How to install Terragrunt?
 
-STEP 1: Install Terraform
+**STEP 1:** Install Terraform
 As Terragrunt is a wrapper around Terraform, you’ll need to have [Terraform installed](https://spacelift.io/blog/how-to-install-terraform) first. You can download the appropriate version of Terraform for your operating system [here](https://developer.hashicorp.com/terraform/install).
 
-STEP 2: Extract the binary and place it in a directory included in your system’s PATH
+**STEP 2:** Extract the binary and place it in a directory included in your system’s PATH
 After downloading Terraform, extract the binary and place it in a directory included in your system’s `PATH`.
 The PATH tells a system where it should look for executables, making them accessible via command-line interfaces or scripts.
 To add a new folder to PATH in Windows, navigate to Advanced System Settings > Environment Variables, select PATH, click “Edit” and then “New.”
 
-STEP 3: Download Terragrunt
+**STEP 3:** Download Terragrunt
 Next, head over to the [Terragrunt GitHub](https://github.com/gruntwork-io/terragrunt/releases) page to download it.
 
-STEP 4: Place the Terragrunt binary in a directory included in your system’s PATH
+**STEP 4:** Place the Terragrunt binary in a directory included in your system’s PATH
 Once you have downloaded the Terragrunt binary, place it in a directory included in your system’s `PATH`. You may also rename the binary to simply `terragrunt` (without the platform-specific suffix) for convenience.
 
-Step 5: Verify the installation
+**STEP 5:** Verify the installation
 Lastly, verify the installation by running `terragrunt --version` on your console command line. It should show the currently installed version.
 
 ```bash
@@ -176,90 +176,89 @@ As you can see, there is a `vpc` module under `modules` folder. Refer to [vpc mo
 
 Let's analyze the files under `initial_configs` folder. Starting with `AWSTerraformInitialConfigs_Management.yaml`, this CloudFormation template defines resources and configurations necessary for managing Terraform state using AWS S3 and DynamoDB, and it provisions an IAM user with the required permissions. 
 
-PARAMETERS:
+**PARAMETERS:**
 
-- Serial: A value used to notify CloudFormation to rotate access keys.
-- IaCUserName: The IAM user name (default: terraform).
-- TerraformStateBucketPrefix: Prefix for the S3 bucket storing Terraform state.
-- TerraformStateLockTableName: Name of the DynamoDB table for state locking.
+- **Serial:** A value used to notify CloudFormation to rotate access keys.
+- **IaCUserName:** The IAM user name (default: terraform).
+- **TerraformStateBucketPrefix:** Prefix for the S3 bucket storing Terraform state.
+- **TerraformStateLockTableName:** Name of the DynamoDB table for state locking.
 
-RESOURCES:
+**RESOURCES:**
 
-- IaCUser (IAM User):
+- **IaCUser (IAM User):**
 Creates an IAM user with tags indicating its provision through CloudFormation and its usage for management purposes.
 
-- IaCUserPolicy (IAM Policy):
+- **IaCUserPolicy (IAM Policy):**
 Grants the IAM user permissions to:
 Manage the Terraform S3 bucket (create, access, and configure it).
 Lock Terraform state via DynamoDB (create, read, update, and delete items).
 Assume the TerraformExecutionRole for executing tasks.
 
-- IaCUserAccessKey & IaCUserSecret (IAM Access Keys & Secret):
+- **IaCUserAccessKey & IaCUserSecret (IAM Access Keys & Secret):**
 Creates and stores the access keys in AWS Secrets Manager for secure access.
 
-- TerraformStateS3Bucket (S3 Bucket):
+- **TerraformStateS3Bucket (S3 Bucket):**
 Creates an S3 bucket to store Terraform state files. It enforces security policies like blocking public access and enabling versioning.
 
-- TerraformStateS3BucketBucketPolicy (S3 Bucket Policy):
+- **TerraformStateS3BucketBucketPolicy (S3 Bucket Policy):**
 Adds a policy to the S3 bucket that denies the deletion of Terraform state files.
 
-- TerraformStateLockDynamoDBTable (DynamoDB Table):
+- **TerraformStateLockDynamoDBTable (DynamoDB Table):**
 Creates a DynamoDB table (LockID as the key) for Terraform state locking to prevent concurrent modifications of the state.
 
-NOTE: You should create a stack in CloudFormation and upload this file on the "Management Account". Now, let's proceed with the `AWSTerraformInitialConfigs_Environment.yaml` file. 
+**NOTE:** You should create a stack in CloudFormation and upload this file on the "Management Account". Now, let's proceed with the `AWSTerraformInitialConfigs_Environment.yaml` file. 
 
-PARAMETERS:
+**PARAMETERS:**
 
-- IaCUserARN: A string parameter representing the ARN of the IAM user responsible for running Terraform. This user will be allowed to assume the role defined in the template. By default, this value needs to be provided (though a placeholder "ARN of the IaC User" is set).
+- **IaCUserARN:** A string parameter representing the ARN of the IAM user responsible for running Terraform. This user will be allowed to assume the role defined in the template. By default, this value needs to be provided (though a placeholder "ARN of the IaC User" is set).
 
-RESOURCES:
+**RESOURCES:**
 
-- TerraformExecutionRole (IAM Role):
+- **TerraformExecutionRole (IAM Role):**
 The TerraformExecutionRole is an IAM role that grants specific AWS permissions for Terraform operations, allowing a specified IAM user (via IaCUserARN) to assume it for a maximum of 4 hours. It is associated with the AdministratorAccess policy, providing full administrative privileges, and includes tags for tracking its provisioning through CloudFormation.
 
-NOTE: Look at the "IaCUserARN" from the "Management Account" and assign this value to the "Parameters" section of the `AWSTerraformInitialConfigs_Environment.yaml` file. You should create a stack in CloudFormation and upload this file on the "Environment Accounts".
+**NOTE:** Look at the "IaCUserARN" from the "Management Account" and assign this value to the "Parameters" section of the `AWSTerraformInitialConfigs_Environment.yaml` file. You should create a stack in CloudFormation and upload this file on the "Environment Accounts".
 
 #### STEP 2
 
 Now, we are ready to analyze the `environments` folder. There is a top-level `terragrunt.hcl` under the folder which includes important configurations.
 This Terragrunt configuration file sets up local variables and configurations for managing Terraform modules and remote state.
 
-Local Variables:
-- base_source_url: Points to the local module source directory.
-- environment_vars and region_vars: Load environment-specific and region-specific variables from env.hcl and region.hcl files, respectively.
-- target_account, target_region, remote_state_account, and remote_state_bucket: Define the AWS account and region for the remote state and specify the bucket for storing Terraform state files.
+**Local Variables:**
+- **base_source_url:** Points to the local module source directory.
+- **environment_vars and region_vars:** Load environment-specific and region-specific variables from env.hcl and region.hcl files, respectively.
+- **target_account, target_region, remote_state_account, and remote_state_bucket:** Define the AWS account and region for the remote state and specify the bucket for storing Terraform state files.
 
-AWS Provider Configuration:
+**AWS Provider Configuration:**
 Generates an aws provider block, setting the region for both the remote state and the target account, with an assume role for accessing the target account's resources.
 
-Remote State Configuration:
+**Remote State Configuration:**
 Configures Terraform to use an S3 bucket for remote state storage, with encryption enabled and a DynamoDB table for state locking.
 
-Global Parameters:
+**Global Parameters:**
 Merges global inputs from env.hcl and region.hcl, allowing all resources to inherit these configurations, which is useful for multi-account setups.
 
 Let's move with the environment folders. The structure is similar in both of the environments, so it will be enough to analyze one of them. Under the environments, there are regions in which the resources are created. Also, there is a `env.hcl` which includes local variables. The variables in the `env.hcl` are important because they determine the account. Diving into one of the regions, you can see the `region.hcl` which specifies the region. In the same
 directory, you can see the folders of the modules, which is `vpc` in our example. Under the `vpc` folder, there is a `terragrunt.hcl` file. This Terragrunt configuration file includes the root `terragrunt.hcl` configuration, which contains common settings for remote state management across all components and environments.
 
-Include Block:
+**Include Block:**
 The configuration references the root settings using the include directive, allowing access to shared configurations and exposing them for use in the current module.
 
-Local Variables:
+**Local Variables:**
 It defines base_source_url from the root configuration, along with the module_name as "vpc" and module_version as "v0.0.1."
 
-Terraform Source:
+**Terraform Source:**
 The source for the Terraform module is set based on the base source URL, module name, and version.
 
-Inputs:
+**Inputs:**
 Specifies the input variables for the VPC module, including availability zones, VPC CIDR block, NAT and VPN gateway settings, subnet configurations, and tags for environment identification.
 
-NOTE: Don't forget to change the necessary values of variables in this folder. For example, the value of "aws_account_id" in the `env.hcl`. Similarly, you
+**NOTE:** Don't forget to change the necessary values of variables in this folder. For example, the value of "aws_account_id" in the `env.hcl`. Similarly, you
 should check the values in the both top and root level `terragrunt.hcl` files.
 
 #### STEP 3
 
-After compliting the necessary adjustments in the files and on the AWS console, you are ready to create the resources. You can open the folder with VSCode and using the terminal, proceed to the `vpc` folders in which the root level `terragrunt.hcl` is located. Finally, enter the following command to create 
-VPC in desired region.
+After compliting the necessary adjustments in the files and on the AWS console, you are ready to create the resources. You can open the folder with VSCode and using the terminal, proceed to the `vpc` folders in which the root level `terragrunt.hcl` is located. Finally, enter the following command to create VPC in desired region.
 
 ```bash
 terragrunt apply
